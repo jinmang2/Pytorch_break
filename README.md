@@ -1,5 +1,7 @@
 # Pytorch 뽀개기
 
+## [wiki](https://github.com/jinmang2/Pytorch_break/wiki)
+
 ## Why Pytorch?
 - 내겐 Tensorflow보다 훨씬 쉬웠다.
 - 연구용으론 torch
