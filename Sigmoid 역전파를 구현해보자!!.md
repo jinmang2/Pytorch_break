@@ -61,3 +61,33 @@ x.grad # 위와 같다.
 >>> tensor([0.0180, 0.0217, 0.0239, 0.0141, 0.0187, 0.0152, 0.0163, 0.0069, 0.0224,
 >>>         0.0225])
 ```
+
+## 이는 무조건 chain rule 계산 함수에서만 쓰이나? No! DNI 활용체에선 이렇게도 정의한다.
+
+```python
+class _SyntheticGradientUpdater(torch.autograd.Function):
+
+    @staticmethod
+    def forward(ctx, trigger, synthetic_gradient):
+        (_, needs_synthetic_gradient_grad) = ctx.needs_input_grad
+        if not needs_synthetic_gradient_grad:
+            raise ValueError(
+                'synthetic_gradient should need gradient but is does not'
+            )
+        ctx.save_for_backward(synthetic_gradient)
+        # clone trigger to force creating a new Variable with
+        # requires_grad=True
+        return trigger.clone()
+
+    @staticmethod
+    def backward(ctx, true_gradient):
+        (synthetic_gradient,) = ctx.saved_variables
+        # compute MSE gradient manually to avoid dependency on PyTorch
+        # internals
+        (batch_size, *_) = synthetic_gradient.size()
+        grad_synthetic_gradient = (
+            2 / batch_size * (synthetic_gradient - true_gradient)
+        )
+        return (true_gradient, grad_synthetic_gradient)
+            
+```
